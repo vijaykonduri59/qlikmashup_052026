@@ -1,0 +1,52 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependencies
+node_modules
+
+# Build output
+dist
+dist-ssr
+
+# Vite cache
+.vite
+
+# IDE / editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment files (may contain secrets)
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing / coverage
+coverage
+.nyc_output
+test-results
+playwright-report
+playwright/.cache
+
+# Sentry
+.sentryclirc
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Local Claude settings (user-specific overrides)
+.claude/settings.local.json

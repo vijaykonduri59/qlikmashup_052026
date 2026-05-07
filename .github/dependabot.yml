@@ -1,0 +1,52 @@
+version: 2
+updates:
+  # npm dependencies — weekly batched updates, grouped to reduce PR fatigue.
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: 'Etc/UTC'
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      types:
+        patterns:
+          - '@types/*'
+      eslint:
+        patterns:
+          - 'eslint*'
+          - '@eslint/*'
+          - 'typescript-eslint'
+      prettier:
+        patterns:
+          - 'prettier*'
+      tanstack:
+        patterns:
+          - '@tanstack/*'
+      testing:
+        patterns:
+          - '@testing-library/*'
+          - 'vitest'
+          - '@vitest/*'
+          - 'jsdom'
+      tailwind:
+        patterns:
+          - 'tailwindcss'
+          - '@tailwindcss/*'
+          - 'tw-animate-css'
+      radix:
+        patterns:
+          - '@radix-ui/*'
+
+  # GitHub Actions — keep workflow action versions current
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - github-actions
