@@ -16,7 +16,7 @@ Documents are numbered roughly in the order they become relevant. You can read t
 | 03  | [03-qlik-embedding.md](03-qlik-embedding.md)                               | Capability API vs nebula.js vs enigma.js (the most important Qlik choice)                                     |
 | 04  | [04-context-and-persistence.md](04-context-and-persistence.md)             | How this project keeps context across multi-month AI-assisted work                                            |
 | 05  | [05-source-control-and-cicd.md](05-source-control-and-cicd.md)             | GitHub + GitHub Actions: how every code change gets validated automatically                                   |
-| 06  | [06-security-scanning.md](06-security-scanning.md)                         | The four-layer security baseline (CodeQL, Dependabot, Secret Scanning, npm audit)                             |
+| 06  | [06-security-scanning.md](06-security-scanning.md)                         | The four-layer security baseline (Semgrep SAST, Dependabot, Secret Scanning, npm audit)                       |
 | 07  | [07-authentication.md](07-authentication.md)                               | Why deploying as a content-library extension means we don't write auth code (and the dev-environment caveat)  |
 | 08  | [08-state-management-zustand.md](08-state-management-zustand.md)           | Zustand: store conventions, mental model, when to reach for global state vs `useState` vs TanStack Query      |
 | 09  | [09-multi-app-navigation.md](09-multi-app-navigation.md)                   | The streams → apps → sheets navigation tree, how we fetch it from Qlik, caching, URL-as-state                 |

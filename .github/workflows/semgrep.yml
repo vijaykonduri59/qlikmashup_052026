@@ -1,0 +1,50 @@
+name: Semgrep
+
+# Static Application Security Testing — replaces our original CodeQL workflow.
+# Reason: CodeQL on private repos requires GitHub Advanced Security (org-only),
+# which isn't available on personal-account plans. Semgrep is fully free, runs
+# anywhere, and covers the same SAST surface for our stack.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Weekly deep scan, Monday 06:00 UTC
+    - cron: '0 6 * * 1'
+
+concurrency:
+  group: semgrep-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Semgrep SAST
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        # `semgrep scan` runs locally without a cloud account.
+        # --error makes the job fail when findings are present.
+        # Rule packs:
+        #   p/security-audit — generic security rules
+        #   p/typescript     — TS-specific patterns
+        #   p/react          — React safety (JSX, hooks, dangerously*)
+        #   p/owasp-top-ten  — web-app OWASP top 10 patterns
+        #   p/javascript     — JS rules (often catches things TS doesn't)
+        run: |
+          semgrep scan \
+            --config "p/security-audit" \
+            --config "p/typescript" \
+            --config "p/react" \
+            --config "p/owasp-top-ten" \
+            --config "p/javascript" \
+            --error

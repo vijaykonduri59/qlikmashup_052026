@@ -12,7 +12,7 @@ _Last updated: 2026-05-07_
 
 | #   | Layer               | Category                                   | What it scans                                                                     |
 | --- | ------------------- | ------------------------------------------ | --------------------------------------------------------------------------------- |
-| 1   | **CodeQL**          | SAST (Static Application Security Testing) | Your _source code_ for known vulnerability patterns                               |
+| 1   | **Semgrep**         | SAST (Static Application Security Testing) | Your _source code_ for known vulnerability patterns                               |
 | 2   | **Dependabot**      | SCA (Software Composition Analysis)        | Your _dependencies_ (`package.json`, lockfile) for known CVEs                     |
 | 3   | **Secret Scanning** | Secret detection                           | Your _commits and history_ for accidentally-committed API keys, tokens, passwords |
 | 4   | **`npm audit`**     | SCA (supplementary)                        | Your dependencies, run as a CI step (defense in depth alongside Dependabot)       |
@@ -29,20 +29,28 @@ Each catches things the others miss. SAST won't tell you a dependency has a CVE.
 
 ## 3. How it works
 
-### Layer 1 — CodeQL (SAST)
+### Layer 1 — Semgrep (SAST)
 
-CodeQL is GitHub's static analysis engine. It builds a queryable model of your code and runs hundreds of pre-written security queries against it. Out of the box for JavaScript/TypeScript it catches things like:
+[Semgrep](https://semgrep.dev/) is an open-source static analysis engine that pattern-matches code against curated rule packs. For our stack we run five packs in CI:
+
+- `p/security-audit` — generic security rules
+- `p/typescript` — TS-specific patterns
+- `p/react` — React safety (JSX, hooks, `dangerously*`)
+- `p/owasp-top-ten` — web-app OWASP top 10
+- `p/javascript` — JS rules (often catches things TS doesn't)
+
+For JavaScript/TypeScript, Semgrep catches the same general classes CodeQL does:
 
 - DOM XSS (e.g., `dangerouslySetInnerHTML` with user input)
 - Prototype pollution
 - Hard-coded credentials in source
 - Insecure RegExp patterns (ReDoS)
 - Unsafe `eval`-like usage
-- Server-side request forgery (where applicable)
+- React-specific issues (unsafe refs, hook misuse, etc.)
 
-**How it runs:** a workflow file at `.github/workflows/codeql.yml` triggers CodeQL on every PR plus a weekly scheduled deep scan. Findings appear in the **Security** tab of the GitHub repo and as PR comments.
+**How it runs:** workflow at `.github/workflows/semgrep.yml` triggers on every PR + push to `main` + weekly Monday 06:00 UTC scan. Findings show up as workflow log output and **fail the job** when present (`--error` flag). Without GitHub Advanced Security, findings are NOT uploaded to the Security tab — they live in the Actions logs.
 
-> **Cost note:** Code scanning was historically limited to public repos or paid GitHub Advanced Security on private repos. GitHub has since expanded free code scanning to **personal-account private repositories**. Verify on first setup — if it's gated for any reason, we have free fallbacks (see §6).
+> **Cost note:** Semgrep CLI is free + open-source under LGPL 2.1. The rule packs we use (`p/...` from semgrep registry) are also free. Semgrep also offers a free Cloud tier (semgrep.dev) with a UI for findings — we don't use it in v1, but adding it later is just an env var (`SEMGREP_APP_TOKEN`).
 
 ### Layer 2 — Dependabot
 
@@ -124,29 +132,31 @@ Fails the build if any high-or-critical vulnerability is found. Acts as a backst
 
 ## 6. Alternatives we considered
 
-| Option                                           | Why we didn't pick it (yet)                                                                                                                                    |
-| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Snyk** (commercial, free tier)                 | Strong dep + SAST scanning, slick UI; adds value as a _second opinion_ but the GitHub baseline already covers our needs. Easy to add later as an extra CI job. |
-| **Semgrep** (open-source SAST + cloud free tier) | Excellent rules-based SAST, very fast, great for custom rules. Adds value if we hit CodeQL false-positive fatigue.                                             |
-| **SonarCloud**                                   | Classic enterprise pick; combines code quality + security. Heavier, more setup, less "free" feel.                                                              |
-| **eslint-plugin-security**                       | Lighter SAST as ESLint rules; useful as a _third_ layer but not a replacement for CodeQL                                                                       |
-| **Skip SAST entirely**                           | Self-defeating — the user explicitly wanted vulnerability scanning                                                                                             |
-| **TruffleHog / GitGuardian for secrets**         | GitHub Secret Scanning is already free and native; no reason to add a third-party                                                                              |
+| Option                                   | Why we didn't pick it                                                                                                                                                                                   |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **CodeQL**                               | Originally planned. Requires GitHub Advanced Security on private repos (org-only paid feature) — confirmed unavailable for our setup on 2026-05-08. Swap back if/when repo goes public or org is added. |
+| **Snyk** (commercial, free tier)         | Strong dep + SAST + slick UI; adds value as a _second opinion_ on top of Semgrep. Easy to add later as an extra CI job.                                                                                 |
+| **SonarCloud**                           | Classic enterprise pick; combines code quality + security. Heavier, more setup.                                                                                                                         |
+| **eslint-plugin-security**               | Lightweight SAST as ESLint rules; useful as a _third_ layer alongside Semgrep, not as a replacement.                                                                                                    |
+| **Skip SAST entirely**                   | Self-defeating — the user explicitly wanted vulnerability scanning.                                                                                                                                     |
+| **TruffleHog / GitGuardian for secrets** | GitHub Secret Scanning is already free and native; no reason to add a third-party.                                                                                                                      |
 
-**When we'd reconsider:** if CodeQL turns out to cost on the private repo, we'd swap to **Semgrep** (free SAST + free CI integration) without losing much. If the project becomes commercial, **Snyk** + **Semgrep** as supplements is a reasonable enterprise upgrade.
+**When we'd swap to CodeQL:** if the repo becomes public OR an org with GitHub Advanced Security takes ownership. The workflow swap is one file (`semgrep.yml` → `codeql.yml`); rule coverage is comparable for our stack.
+
+**When we'd add Snyk on top:** if the project becomes commercial and we want a vendor-supported view of findings + a UI dashboard. Snyk's free tier is generous; adding it is one CI job.
 
 ## 7. What this means for our project
 
 In practice:
 
 1. **Before scaffold:** none of this is wired up yet. We turn it on right after the project exists.
-2. **Right after scaffold:** in repo Settings → Code security & analysis, flip on Dependabot alerts, Dependabot security updates, and Secret Scanning (one-click each).
-3. **Add `.github/workflows/codeql.yml`** for the SAST scan. GitHub provides a starter template — we'll customize it for TypeScript.
-4. **Add `npm audit` to the main CI workflow** as a step.
-5. **Configure `.github/dependabot.yml`** to enable routine version updates with a sensible cadence (weekly for regular deps, daily for security).
-6. **Daily loop:** when an alert fires (in PR or repo Security tab), you triage:
+2. **Right after scaffold:** in repo Settings → Advanced Security → enable Dependency Graph, Dependabot alerts, Dependabot security updates, Grouped security updates, Secret Scanning, Push protection.
+3. **Use `.github/workflows/semgrep.yml`** for the SAST scan (NOT CodeQL — see §1 cost note). Runs on every PR + push to `main` + weekly Monday scan. Findings appear in the Actions log and fail the workflow.
+4. **Add `npm audit` to the main CI workflow** as a step (already in `ci.yml`).
+5. **Configure `.github/dependabot.yml`** to enable routine version updates with a sensible cadence (weekly grouped npm + GitHub Actions).
+6. **Daily loop:** when an alert fires (in PR or workflow log), you triage:
    - **Real issue, easy fix?** Apply the fix in a PR.
    - **Real issue, hard fix?** Open a tracking issue, plan the work.
-   - **False positive?** Suppress with a comment explaining _why_ it's not exploitable in our context. Never dismiss without writing the reason.
+   - **False positive?** Suppress with a `// nosemgrep: <rule-id>` comment + reason in a PR description. Never silence a rule globally without explicit reasoning.
 
 The single most important habit: **read every alert, even when it's noisy.** The cost of skimming is low; the cost of missing one real CVE is high. Once you've seen a few false positives in the same category, you'll triage faster.

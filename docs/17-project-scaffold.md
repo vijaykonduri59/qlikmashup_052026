@@ -272,17 +272,17 @@ Files added:
 
 User decided to wire the full CI pipeline before adding more code so future code changes flow through it automatically. Files added:
 
-| File                           | Role                                                                                                       |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| `.github/workflows/ci.yml`     | On PR + push to `main`: install (`npm ci`) → lint → format:check → typecheck → test → build → `npm audit`  |
-| `.github/workflows/codeql.yml` | SAST: PR + push to `main` + weekly Monday scan; `security-and-quality` query suite                         |
-| `.github/dependabot.yml`       | Weekly grouped npm updates (types, eslint, prettier, tanstack, testing, tailwind, radix); + GitHub Actions |
-| `.gitattributes`               | LF normalization across OSes; CRLF preserved for Windows scripts                                           |
-| `README.md` (root)             | Project overview pointing to `SKILLS.md` and `docs/`                                                       |
+| File                            | Role                                                                                                                                                                                                                             |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.github/workflows/ci.yml`      | On PR + push to `main`: install (`npm ci`) → lint → format:check → typecheck → test → build → `npm audit`                                                                                                                        |
+| `.github/workflows/semgrep.yml` | SAST: PR + push to `main` + weekly Monday scan. Originally CodeQL; swapped 2026-05-08 when CodeQL failed with "Code scanning not enabled" — turns out CodeQL on private repos requires GitHub Advanced Security (org-only paid). |
+| `.github/dependabot.yml`        | Weekly grouped npm updates (types, eslint, prettier, tanstack, testing, tailwind, radix); + GitHub Actions                                                                                                                       |
+| `.gitattributes`                | LF normalization across OSes; CRLF preserved for Windows scripts                                                                                                                                                                 |
+| `README.md` (root)              | Project overview pointing to `SKILLS.md` and `docs/`                                                                                                                                                                             |
 
-**What's enforced:** every PR runs the quality gate AND CodeQL. Branch protection (set up via GitHub UI) requires both green before merge.
+**What's enforced:** every PR runs the quality gate AND Semgrep SAST. Branch protection (set up via GitHub UI) requires both green before merge.
 
-**What's free at our scale:** all of it. CodeQL is free for personal-account private repos; Dependabot, Secret Scanning, and Actions free-tier minutes (2,000/month) are far more than we need.
+**What's free at our scale:** all of it. Semgrep CLI + rule packs are free open-source; Dependabot, Secret Scanning, and Actions free-tier minutes (2,000/month) are far more than we need. CodeQL would have been free too if this were a public repo or an org with Advanced Security — not our case.
 
 ### Stage 11 — git init + initial commit ✓ DONE
 

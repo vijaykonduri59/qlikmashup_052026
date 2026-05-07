@@ -10,19 +10,19 @@ on-premises Qlik Sense Enterprise.
 
 ## Stack
 
-| Layer            | Pick                                                                             |
-| ---------------- | -------------------------------------------------------------------------------- |
-| Build            | Vite 6                                                                           |
-| Framework        | React 19 + TypeScript (strict)                                                   |
-| Styling          | Tailwind v4 + shadcn/ui                                                          |
-| State            | Zustand (UI state) + TanStack Query (server state)                               |
-| Routing          | React Router v7 (library mode)                                                   |
-| Qlik integration | nebula.js + enigma.js (mocked in v1; real swap-in is Stage 7b)                   |
-| Charting hybrid  | nebula by default; ECharts + AG Grid Community for custom                        |
-| Testing          | Vitest + Testing Library + Playwright                                            |
-| Errors           | `react-error-boundary` (per-chart, per-route, global)                            |
-| Observability    | Sentry (errors + performance + Qlik breadcrumbs)                                 |
-| CI/CD            | GitHub Actions (CI) + CodeQL (SAST) + Dependabot + Secret Scanning + `npm audit` |
+| Layer            | Pick                                                                              |
+| ---------------- | --------------------------------------------------------------------------------- |
+| Build            | Vite 6                                                                            |
+| Framework        | React 19 + TypeScript (strict)                                                    |
+| Styling          | Tailwind v4 + shadcn/ui                                                           |
+| State            | Zustand (UI state) + TanStack Query (server state)                                |
+| Routing          | React Router v7 (library mode)                                                    |
+| Qlik integration | nebula.js + enigma.js (mocked in v1; real swap-in is Stage 7b)                    |
+| Charting hybrid  | nebula by default; ECharts + AG Grid Community for custom                         |
+| Testing          | Vitest + Testing Library + Playwright                                             |
+| Errors           | `react-error-boundary` (per-chart, per-route, global)                             |
+| Observability    | Sentry (errors + performance + Qlik breadcrumbs)                                  |
+| CI/CD            | GitHub Actions (CI) + Semgrep (SAST) + Dependabot + Secret Scanning + `npm audit` |
 
 ## Getting started
 

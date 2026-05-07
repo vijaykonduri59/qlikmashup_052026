@@ -94,7 +94,7 @@ In GitHub repo settings:
 
 - ✓ Require a pull request before merging
 - ✓ Require status checks to pass before merging
-  - Required: `quality`, `build`, `CodeQL`, etc.
+  - Required: `quality`, `build`, `semgrep`, etc.
 - ✗ Require approvals — _disabled, because solo_
 - ✓ Allow administrators to bypass — kept on as an emergency lever
 
@@ -111,7 +111,7 @@ API keys, tokens, and Qlik connection details (later) live in **GitHub Actions S
 - **Free** for a solo personal-account private project (within Actions quota; we'll easily stay under it)
 - **Battle-tested** at every scale, from solo to Microsoft-scale
 - **Massive marketplace** of pre-built actions (`actions/checkout`, `actions/setup-node`, hundreds more)
-- **Native security integrations** — CodeQL, Dependabot, Secret Scanning all "first-party" with one-line setup
+- **Native security integrations** — Dependabot, Secret Scanning all "first-party" with one-line setup. (CodeQL would be too if we had GitHub Advanced Security; we use Semgrep instead — see [docs/06](06-security-scanning.md).)
 - **Best AI tooling support** of any CI platform
 - **Logs and reruns** are kept; debugging a flaky CI run is straightforward
 - **Workflow files live with the code**, so history of CI changes is visible alongside code history
