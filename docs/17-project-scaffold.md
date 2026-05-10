@@ -288,12 +288,48 @@ User decided to wire the full CI pipeline before adding more code so future code
 
 `.git` initialized; husky's pre-commit hook (`npx lint-staged`) is now active. Initial commit captures Stages 1–7 + 10. Push to GitHub is the user's next step.
 
+### Stage 8 — Sentry observability ✓ DONE (foundation)
+
+Files added:
+
+| File                                   | Role                                                                                                                                       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/lib/observability/sentry.ts`      | `initSentry()` — env-aware init, no-op when DSN missing, samples 100% in dev / 10% in prod, scrubs auth-related headers via `beforeSend`   |
+| `src/lib/observability/breadcrumbs.ts` | Typed helpers: `qlikBreadcrumb({ category, message, data })`, `navigationBreadcrumb({ from, to })`. Categories restricted to a fixed enum. |
+| `src/main.tsx` (modified)              | Calls `initSentry()` BEFORE React renders so startup errors are captured                                                                   |
+| `.env.example`                         | Documents `VITE_SENTRY_DSN` env var (gitignored `.env.local` is where the user pastes their actual DSN)                                    |
+
+**Dep added:** `@sentry/react` (~7 packages, ~115 KB gzipped client-side).
+
+**What's wired:**
+
+- Unhandled exceptions → Sentry (auto)
+- Unhandled promise rejections → Sentry (auto)
+- Web Vitals (LCP, FCP, CLS, INP) → Sentry Performance (auto, via `browserTracingIntegration`)
+- Page loads + transitions → traced (10% sampling in prod)
+- Custom breadcrumbs for Qlik events → ready to call from `qlik-architect` work
+
+**Deferred to follow-up stages:**
+
+- `@sentry/vite-plugin` for source-map upload (needs `SENTRY_AUTH_TOKEN` from a real Sentry account; once user signs up + adds the secret in GitHub Actions, it's a 5-minute add)
+- React Router v7 routing instrumentation (the basic browser tracing covers page loads; nicer route-name tags come later)
+- Sentry user context (`Sentry.setUser({ id })`) — happens in Stage 7b once we have a real `userId` from `getAuthenticatedUser`
+- Custom transactions wrapping engine calls (`app-open`, `sheet-render`, `export-data`) — better written when those calls are real Qlik, not mocked
+- CI guard that fails the prod build if `VITE_SENTRY_DSN` is missing — currently a warning
+
+**To activate Sentry:**
+
+1. Sign up at sentry.io (free tier — 5K errors + 10K perf events/month)
+2. Create a React project; copy the DSN
+3. Locally: `cp .env.example .env.local`, paste DSN into `VITE_SENTRY_DSN`
+4. In GitHub: repo → Settings → Secrets and variables → Actions → New repository secret → name `VITE_SENTRY_DSN`, value the DSN
+5. Update `.github/workflows/ci.yml` build step to read the secret (one-line addition; defer until DSN exists)
+
 ### Stages ahead
 
 | Stage | What gets added                                                  | Status  |
 | ----- | ---------------------------------------------------------------- | ------- |
 | 7b    | Replace mock with real `enigma.js` + nebula.js bar chart + table | pending |
-| 8     | Sentry + breadcrumb helpers                                      | pending |
 | 9     | Playwright E2E                                                   | pending |
 | 12    | size-limit + Lighthouse CI (perf gates from docs/12)             | pending |
 

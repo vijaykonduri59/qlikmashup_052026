@@ -65,7 +65,21 @@ Even with auth handled, the mashup needs to:
 2. **Detect session expiry** — sessions can time out. enigma.js emits a `closed` event on the WebSocket; you respond by showing a "your session has expired, please reload" UI.
 3. **Handle "user not authorized for this app/sheet"** — auth doesn't mean authorization. The user might be signed in but not allowed into this Qlik app. The engine returns errors; you show a friendly access-denied screen.
 
-### Development flow (the puzzle)
+### Development flow — sense-demo.qlik.com (decided 2026-05-10)
+
+**Dev connects to Qlik's public demo server**, `sense-demo.qlik.com`. Anonymous WebSocket access, real Qlik apps, zero infrastructure setup. The code uses one env-aware switch:
+
+```ts
+const host = import.meta.env.PROD
+  ? location.host // prod: same origin (Qlik content-library deploy)
+  : 'sense-demo.qlik.com'; // dev: Qlik public demo
+```
+
+This means **DEV / UAT / PRD QMC environments all use the same build**: once the mashup zip is imported into a QMC's content library, `location.host` resolves to whatever Qlik server hosts the mashup. No per-environment URL config, no separate builds.
+
+**Caveat:** the localhost-to-sense-demo cross-origin connection may need a Vite dev proxy if the demo server's CORS rejects `localhost:5173`. We'll find out on first connection in Stage 7b. If it does, `vite.config.ts` adds a `server.proxy` rule that tunnels `/qlik` to `wss://sense-demo.qlik.com` so the browser only sees same-origin.
+
+### Development flow — the puzzle (still open for non-demo dev work)
 
 In development, things are different:
 
